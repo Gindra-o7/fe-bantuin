@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
-import { Inter_Tight, Outfit } from "next/font/google";
+import { Geologica, Outfit } from "next/font/google";
 import "./globals.css";
+import { AuthProvider } from "@/contexts/AuthContext";
 
-const hostGrotesk = Inter_Tight({
+const hostGrotesk = Geologica({
   variable: "--font-host-grotesk",
   subsets: ["latin"],
   // weight: "400",
@@ -29,7 +30,7 @@ export default function RootLayout({
       <body
         className={`${hostGrotesk.variable} ${outfit.variable} antialiased`}
       >
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
