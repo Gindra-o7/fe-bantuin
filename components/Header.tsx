@@ -37,7 +37,9 @@ const Header = () => {
             className="md:w-10 md:h-10 lg:w-12 lg:h-12"
           />
           <h1 className="font-display text-primary font-bold text-2xl md:text-3xl lg:text-4xl">
-            Bant<span className="text-secondary">uin</span>
+            <Link href="/">
+              Bant<span className="text-secondary">uin</span>
+            </Link>
           </h1>
         </div>
 
@@ -46,14 +48,18 @@ const Header = () => {
           <ul className="flex items-center justify-between gap-4">
             <li>
               <Button variant="link">
-                <Link href="/">Ngapain di Bantuin?</Link>
+                <Link href="/why">Ngapain di Bantuin?</Link>
               </Button>
             </li>
             <li>
-              <Button variant="link">Tentang Kami</Button>
+              <Button variant="link">
+                <Link href="/who">Tentang Kami</Link>
+              </Button>
             </li>
             <li>
-              <Button variant="link">Cara Kerja</Button>
+              <Button variant="link">
+                <Link href="/how">Cara Kerja</Link>
+              </Button>
             </li>
           </ul>
         </nav>
@@ -69,8 +75,12 @@ const Header = () => {
             <>
               <Button className="text-sm">
                 <TbTools className="text-white" />
-                <span className="hidden lg:inline">Jadi Penyedia</span>
-                <span className="lg:hidden">Penyedia</span>
+                <Link href="/seller/dashboard" className="hidden lg:inline">
+                  Jadi Penyedia
+                </Link>
+                <Link href="/seller/dashboard" className="lg:hidden">
+                  Penyedia
+                </Link>
               </Button>
 
               {/* User Dropdown Menu */}
@@ -159,17 +169,17 @@ const Header = () => {
             <ul className="flex flex-col gap-2">
               <li>
                 <Button variant="ghost" className="w-full justify-start">
-                  <Link href="/">Ngapain di Bantuin?</Link>
+                  <Link href="/why">Ngapain di Bantuin?</Link>
                 </Button>
               </li>
               <li>
                 <Button variant="ghost" className="w-full justify-start">
-                  Tentang Kami
+                  <Link href="/who">Tentang Kami</Link>
                 </Button>
               </li>
               <li>
                 <Button variant="ghost" className="w-full justify-start">
-                  Cara Kerja
+                  <Link href="/how">Cara Kerja</Link>
                 </Button>
               </li>
             </ul>
