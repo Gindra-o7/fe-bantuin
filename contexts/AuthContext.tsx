@@ -10,8 +10,14 @@ interface User {
   profilePicture: string | null;
   isSeller: boolean;
   isVerified: boolean;
-  major: string;
-  batch: string;
+  major: string | null;
+  batch: string | null;
+  nim: string | null;
+  phoneNumber: string | null;
+  bio: string | null;
+  avgRating: number;
+  totalReviews: number;
+  totalOrdersCompleted: number;
 }
 
 interface AuthContextType {
@@ -19,6 +25,8 @@ interface AuthContextType {
   loading: boolean;
   login: () => void;
   logout: () => void;
+  activateSellerMode: (phoneNumber: string, bio: string) => Promise<void>;
+  refreshUser: () => Promise<void>;
   isAuthenticated: boolean;
 }
 
@@ -34,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Fetch user profile
   const fetchUserProfile = async (token: string) => {
     try {
-      const response = await fetch(`${API_URL}/auth/profile`, {
+      const response = await fetch(`${API_URL}/users/profile`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -52,6 +60,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       localStorage.removeItem("access_token");
       setUser(null);
       return null;
+    }
+  };
+
+  // Refresh user data
+  const refreshUser = async () => {
+    const token = localStorage.getItem("access_token");
+    if (token) {
+      await fetchUserProfile(token);
     }
   };
 
@@ -77,6 +93,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Login with Google
   const login = () => {
     window.location.href = `${API_URL}/auth/google`;
+  };
+
+  // Activate seller mode
+  const activateSellerMode = async (phoneNumber: string, bio: string) => {
+    try {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        throw new Error("Not authenticated");
+      }
+
+      const response = await fetch(`${API_URL}/users/activate-seller`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          phoneNumber,
+          bio,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result.message || "Failed to activate seller mode");
+      }
+
+      // Update user state with new data
+      setUser(result.data);
+
+      // Redirect to seller dashboard
+      router.push("/seller/dashboard");
+    } catch (error: any) {
+      console.error("Activate seller error:", error);
+      throw error;
+    }
   };
 
   // Logout
@@ -106,6 +160,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     loading,
     login,
     logout,
+    activateSellerMode,
+    refreshUser,
     isAuthenticated: !!user,
   };
 
