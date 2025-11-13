@@ -44,7 +44,7 @@ const SellerDashboardPage = () => {
       {/* Welcome Section */}
       <div className="mb-8">
         <h1 className="text-2xl font-bold text-gray-900 mb-2">
-          Selamat datang, {user.fullName.split(" ")[0]}! 👋
+          Selamat datang, {user.fullName}! 👋
         </h1>
         <p className="text-gray-600">
           Berikut adalah ringkasan aktivitas anda hari ini
