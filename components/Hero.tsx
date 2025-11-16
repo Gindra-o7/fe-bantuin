@@ -1,16 +1,32 @@
+"use client";
+
+import { useState } from "react";
+import Image from "next/image";
 import { Button } from "./ui/button";
+import { getSupabaseUrl } from "@/lib/supabase";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const SUPABASE_BUCKET_PATH = process.env.NEXT_PUBLIC_SUPABASE_BUCKET_PATH;
-
-const VIDEO_SRC = `${SUPABASE_URL}${SUPABASE_BUCKET_PATH}/bg.mp4`;
+const videoSrc = getSupabaseUrl("bg.mp4");
+const imageSrc = getSupabaseUrl("service.jpg");
 
 const Hero = () => {
+  const [isVideoLoaded, setIsVideoLoaded] = useState(false);
+
   return (
     <section className="relative w-full h-[70vh] overflow-hidden">
-      {/* Video Background */}
-      <video autoPlay loop muted playsInline className="absolute top-0 left-0 w-full h-full object-cover">
-        <source src={VIDEO_SRC} type="video/mp4" />
+      {/* Image Placeholder Background */}
+      <Image src={imageSrc} alt="Bantuin background placeholder" fill priority sizes="100vw" unoptimized className={`object-cover transition-opacity duration-700 ${isVideoLoaded ? "opacity-0" : "opacity-100"}`} />
+
+      {/* Video Background with smooth fade-in */}
+      <video
+        autoPlay
+        loop
+        muted
+        playsInline
+        preload="auto"
+        onCanPlay={() => setIsVideoLoaded(true)}
+        className={`absolute top-0 left-0 w-full h-full object-cover transition-opacity duration-700 ${isVideoLoaded ? "opacity-100" : "opacity-0"}`}
+      >
+        <source src={videoSrc} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
