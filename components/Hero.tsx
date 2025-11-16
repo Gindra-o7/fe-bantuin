@@ -1,17 +1,16 @@
 import { Button } from "./ui/button";
 
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const SUPABASE_BUCKET_PATH = process.env.NEXT_PUBLIC_SUPABASE_BUCKET_PATH;
+
+const VIDEO_SRC = `${SUPABASE_URL}${SUPABASE_BUCKET_PATH}/bg.mp4`;
+
 const Hero = () => {
   return (
     <section className="relative w-full h-[70vh] overflow-hidden">
       {/* Video Background */}
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute top-0 left-0 w-full h-full object-cover"
-      >
-        <source src="/bg.mp4" type="video/mp4" />
+      <video autoPlay loop muted playsInline className="absolute top-0 left-0 w-full h-full object-cover">
+        <source src={VIDEO_SRC} type="video/mp4" />
         Your browser does not support the video tag.
       </video>
 
@@ -24,10 +23,7 @@ const Hero = () => {
           Temukan Bantuan di <span className="text-secondary">Bantuin</span>
         </h1>
 
-        <p className="text-white/90 text-base sm:text-lg md:text-xl max-w-3xl">
-          Platform marketplace jasa yang bakal ngehubungin antara si penyedia
-          dan pengguna jasa oleh dan buat mahasiswa di kampus UIN Suska Riau
-        </p>
+        <p className="text-white/90 text-base sm:text-lg md:text-xl max-w-3xl">Platform marketplace jasa yang bakal ngehubungin antara si penyedia dan pengguna jasa oleh dan buat mahasiswa di kampus UIN Suska Riau</p>
 
         {/* Optional: Search Bar */}
         <div className="mt-12 w-full max-w-2xl">
@@ -37,9 +33,7 @@ const Hero = () => {
               placeholder="Cari layanan yang kamu butuhin..."
               className="w-full px-6 py-4 rounded-lg bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder:text-white/60 focus:outline-none focus:ring-2 focus:ring-secondary"
             />
-            <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md">
-              Cari
-            </Button>
+            <Button className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md">Cari</Button>
           </div>
         </div>
       </div>
