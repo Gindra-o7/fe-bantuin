@@ -36,7 +36,7 @@ const Header = () => {
             height={128}
             className="md:w-10 md:h-10 lg:w-14 lg:h-14"
           />
-          <h1 className="font-display text-primary font-bold text-2xl md:text-3xl">
+          <h1 className="font-display text-primary font-bold text-2xl md:text-3xl lg:text-4xl">
             <Link className="" href="/">
               Bant<span className="text-secondary">uin</span>
             </Link>
@@ -46,6 +46,11 @@ const Header = () => {
         {/* Desktop Navigation */}
         <nav className="hidden lg:flex justify-between gap-2 items-center">
           <ul className="flex items-center justify-between gap-4">
+            <li>
+              <Button variant="link">
+                <Link href="/services">Jelajahi Jasa</Link>
+              </Button>
+            </li>
             <li>
               <Button variant="link">
                 <Link href="/why">Ngapain di Bantuin?</Link>
@@ -167,6 +172,11 @@ const Header = () => {
         <div className="md:hidden border-t border-accent bg-white">
           <nav className="px-4 py-4">
             <ul className="flex flex-col gap-2">
+              <li>
+                <Button variant="ghost" className="w-full justify-start">
+                  <Link href="/services">Jelajahi Jasa</Link>
+                </Button>
+              </li>
               <li>
                 <Button variant="ghost" className="w-full justify-start">
                   <Link href="/why">Ngapain di Bantuin?</Link>
