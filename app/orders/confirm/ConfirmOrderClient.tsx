@@ -16,6 +16,7 @@ import {
 import { TbArrowLeft, TbLock } from "react-icons/tb";
 import { Label } from "@/components/ui/label";
 
+// Tipe data untuk Order (bisa disesuaikan)
 interface OrderDetail {
   id: string;
   title: string;
@@ -33,29 +34,11 @@ const ConfirmOrderClient = () => {
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
-  const [snapReady, setSnapReady] = useState(false);
 
   const orderId = searchParams.get("orderId");
   const MIDTRANS_CLIENT_KEY = process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY!;
 
-  // Validate environment
-  useEffect(() => {
-    if (!MIDTRANS_CLIENT_KEY) {
-      console.error("⚠️ MIDTRANS_CLIENT_KEY tidak ditemukan di environment!");
-      setError("Konfigurasi pembayaran tidak lengkap");
-    } else {
-      console.log("✅ Midtrans Client Key loaded");
-    }
-  }, [MIDTRANS_CLIENT_KEY]);
-
-  // Check authentication
-  useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      router.push("/");
-    }
-  }, [authLoading, isAuthenticated, router]);
-
-  // Fetch order detail
+  // 1. Fetch detail order yang berstatus DRAFT
   useEffect(() => {
     if (orderId && !authLoading && isAuthenticated) {
       const fetchOrder = async () => {
@@ -77,7 +60,6 @@ const ConfirmOrderClient = () => {
             setError(data.message || "Gagal memuat detail pesanan.");
           }
         } catch (err) {
-          console.error("Fetch order error:", err);
           setError("Terjadi kesalahan jaringan.");
         } finally {
           setLoading(false);
@@ -87,40 +69,7 @@ const ConfirmOrderClient = () => {
     }
   }, [orderId, authLoading, isAuthenticated]);
 
-  // Check if Snap is ready
-  useEffect(() => {
-    const checkSnap = () => {
-      if (typeof window !== "undefined" && (window as any).snap) {
-        console.log("✅ Midtrans Snap is ready");
-        setSnapReady(true);
-        return true;
-      }
-      return false;
-    };
-
-    // Check immediately
-    if (checkSnap()) return;
-
-    // Poll every 500ms for max 10 seconds
-    let attempts = 0;
-    const maxAttempts = 20;
-
-    const interval = setInterval(() => {
-      attempts++;
-      if (checkSnap() || attempts >= maxAttempts) {
-        clearInterval(interval);
-        if (attempts >= maxAttempts && !checkSnap()) {
-          console.error("❌ Midtrans Snap failed to load after 10 seconds");
-          setError(
-            "Gagal memuat sistem pembayaran. Refresh halaman dan coba lagi."
-          );
-        }
-      }
-    }, 500);
-
-    return () => clearInterval(interval);
-  }, []);
-
+  // 2. Handle Konfirmasi dan Pembayaran
   const handleConfirmAndPay = async () => {
     if (!order) return;
 
@@ -136,73 +85,37 @@ const ConfirmOrderClient = () => {
 
       const data = await response.json();
 
-      console.log("💳 Payment Response:", {
-        success: data.success,
-        hasToken: !!data.paymentToken,
-        hasRedirectUrl: !!data.paymentRedirectUrl,
-        snapLoaded: snapReady,
-        windowSnap: typeof window !== "undefined" && !!(window as any).snap,
-      });
-
-      if (!data.success) {
-        throw new Error(data.message || "Gagal mendapatkan token pembayaran");
+      if (data.success && data.paymentToken) {
+        // Pembayaran Midtrans
+        (window as any).snap.pay(data.paymentToken, {
+          onSuccess: (result: any) => {
+            console.log("Payment Success:", result);
+            // Arahkan ke halaman daftar pesanan buyer
+            router.push(`/buyer/orders/${order.id}`);
+          },
+          onPending: (result: any) => {
+            console.log("Payment Pending:", result);
+            router.push(`/buyer/orders/${order.id}`);
+          },
+          onError: (error: any) => {
+            console.error("Payment Error:", error);
+            setError("Gagal memproses pembayaran. Silakan coba lagi.");
+          },
+          onClose: () => {
+            console.log("Popup pembayaran ditutup");
+          },
+        });
+      } else {
+        setError(data.message || "Gagal mendapatkan token pembayaran.");
       }
-
-      if (!data.paymentToken) {
-        throw new Error("Token pembayaran tidak ditemukan");
-      }
-
-      // Check if Snap is available
-      const snapScript = (window as any).snap;
-
-      if (!snapScript || !snapReady) {
-        // FALLBACK: Use redirect mode
-        console.log("⚠️ Snap not ready, using redirect mode");
-        if (data.paymentRedirectUrl) {
-          window.location.href = data.paymentRedirectUrl;
-          return;
-        }
-        throw new Error("Sistem pembayaran tidak tersedia");
-      }
-
-      // Use Snap popup mode
-      console.log(
-        "🚀 Calling snap.pay with token:",
-        data.paymentToken.substring(0, 20) + "..."
-      );
-
-      snapScript.pay(data.paymentToken, {
-        onSuccess: (result: any) => {
-          console.log("✅ Payment Success:", result);
-          alert("Pembayaran berhasil!");
-          router.push(`/buyer/orders/${order.id}`);
-        },
-        onPending: (result: any) => {
-          console.log("⏳ Payment Pending:", result);
-          alert("Menunggu konfirmasi pembayaran...");
-          router.push(`/buyer/orders/${order.id}`);
-        },
-        onError: (error: any) => {
-          console.error("❌ Payment Error:", error);
-          setError(
-            "Gagal memproses pembayaran: " + (error.message || "Unknown error")
-          );
-          setLoading(false);
-        },
-        onClose: () => {
-          console.log("🔒 Payment popup ditutup");
-          setLoading(false);
-        },
-      });
-    } catch (err: any) {
-      console.error("❌ Payment Error:", err);
-      setError(err.message || "Terjadi kesalahan. Silakan coba lagi.");
+    } catch (err) {
+      setError("Terjadi kesalahan. Silakan coba lagi.");
+    } finally {
       setLoading(false);
     }
   };
 
-  // Loading state
-  if (authLoading || (loading && !order)) {
+  if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -210,8 +123,7 @@ const ConfirmOrderClient = () => {
     );
   }
 
-  // Error state
-  if (error && !order) {
+  if (error) {
     return (
       <Card className="border-destructive">
         <CardHeader>
@@ -232,23 +144,17 @@ const ConfirmOrderClient = () => {
     );
   }
 
-  if (!order) return null;
+  if (!order) {
+    return null; // Atau state loading
+  }
 
   return (
     <>
-      {/* Load Midtrans Script */}
+      {/* Load Script Midtrans */}
       <Script
         src="https://app.sandbox.midtrans.com/snap/snap.js"
         data-client-key={MIDTRANS_CLIENT_KEY}
         strategy="afterInteractive"
-        onLoad={() => {
-          console.log("📦 Midtrans Snap script loaded successfully");
-          setSnapReady(true);
-        }}
-        onError={(e) => {
-          console.error("❌ Failed to load Midtrans Snap:", e);
-          setError("Gagal memuat sistem pembayaran. Refresh halaman.");
-        }}
       />
 
       <Button variant="ghost" onClick={() => router.back()} className="mb-4">
@@ -264,30 +170,17 @@ const ConfirmOrderClient = () => {
             pembayaran.
           </CardDescription>
         </CardHeader>
-
         <CardContent className="space-y-4">
-          {/* Snap Loading Indicator */}
-          {!snapReady && (
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 text-sm text-blue-800">
-              <div className="flex items-center gap-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
-                <span>Memuat sistem pembayaran...</span>
-              </div>
-            </div>
-          )}
-
           <div>
             <Label>Jasa</Label>
             <p className="font-medium">{order.title}</p>
           </div>
-
           <div>
             <Label>Kebutuhan Anda</Label>
             <p className="text-sm text-muted-foreground whitespace-pre-wrap p-3 bg-gray-50 rounded-md">
               {order.requirements}
             </p>
           </div>
-
           {order.attachments.length > 0 && (
             <div>
               <Label>Lampiran</Label>
@@ -300,14 +193,7 @@ const ConfirmOrderClient = () => {
               </ul>
             </div>
           )}
-
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-800">
-              {error}
-            </div>
-          )}
         </CardContent>
-
         <CardFooter className="flex-col items-stretch gap-4">
           <div className="flex items-center justify-between p-4 bg-primary/10 rounded-lg">
             <span className="text-base font-medium">Total Pembayaran</span>
@@ -315,21 +201,15 @@ const ConfirmOrderClient = () => {
               Rp {Number(order.price).toLocaleString("id-ID")}
             </span>
           </div>
-
           <Button
             size="lg"
             className="w-full"
             onClick={handleConfirmAndPay}
-            disabled={loading || !snapReady}
+            disabled={loading}
           >
             <TbLock className="mr-2" />
-            {loading
-              ? "Memproses..."
-              : !snapReady
-              ? "Memuat..."
-              : "Konfirmasi & Bayar"}
+            {loading ? "Memproses..." : "Konfirmasi & Bayar"}
           </Button>
-
           <p className="text-xs text-muted-foreground text-center">
             Pembayaran aman diproses oleh Midtrans.
           </p>
